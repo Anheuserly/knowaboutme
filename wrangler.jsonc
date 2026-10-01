@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "knowaboutme",
+  "compatibility_date": "2026-06-29",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "build": {
+    "command": "test -f .open-next/worker.js || npm run build"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "knowaboutme"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "DATABASE_URL": "postgresql://postgres:AnheVps2022@vps.amcmep.in:5432/knowaboutme",
+    "JWT_SECRET": "knowaboutme_super_secret_jwt_key_2026_identity_vault",
+    "NEXT_PUBLIC_APP_URL": "https://knowaboutme.com"
+  }
+}
