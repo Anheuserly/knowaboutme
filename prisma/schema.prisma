@@ -1,0 +1,537 @@
+// Prisma Schema for KnowAboutMe Personal Identity & Biography Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  active
+  suspended
+  deleted
+}
+
+enum ProfileStatus {
+  draft
+  published
+  private
+  suspended
+}
+
+enum MessageStatus {
+  new
+  read
+  archived
+  spam
+}
+
+enum UserRole {
+  super_admin
+  admin
+  moderator
+  user
+}
+
+model User {
+  id                String       @id @default(uuid()) @db.Uuid
+  email             String       @unique @db.VarChar(255)
+  password_hash     String       @db.Text
+  role              UserRole     @default(user)
+  email_verified_at DateTime?    @db.Timestamp(6)
+  status            UserStatus   @default(active)
+  last_login_at     DateTime?    @db.Timestamp(6)
+  created_at        DateTime     @default(now()) @db.Timestamp(6)
+  updated_at        DateTime     @updatedAt @db.Timestamp(6)
+
+  profile           Profile?
+  audit_logs        AuditLog[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model Profile {
+  id                  String         @id @default(uuid()) @db.Uuid
+  user_id             String         @unique @db.Uuid
+  username            String         @unique @db.VarChar(30)
+  display_name        String         @db.VarChar(100)
+  headline            String?        @db.VarChar(200)
+  profile_type        String?        @default("personal") @db.VarChar(50)
+  short_bio           String?        @db.Text
+  long_bio            String?        @db.Text
+  profile_photo_url   String?        @db.Text
+  cover_image_url     String?        @db.Text
+  location            String?        @db.VarChar(100)
+  website_url         String?        @db.Text
+  date_of_birth       DateTime?      @db.Date
+  pronouns            String?        @db.VarChar(50)
+  availability_status String?        @db.VarChar(100)
+  profile_status      ProfileStatus  @default(published)
+  is_verified         Boolean        @default(false)
+  seo_title           String?        @db.VarChar(200)
+  seo_description     String?        @db.Text
+  seo_keywords        String?        @db.Text
+  theme_id            String?        @default("minimal") @db.VarChar(50)
+  accent_color        String?        @default("#6366f1") @db.VarChar(20)
+  font_family         String?        @default("sans") @db.VarChar(30)
+  custom_domain       String?        @db.VarChar(255)
+  created_at          DateTime       @default(now()) @db.Timestamp(6)
+  updated_at          DateTime       @updatedAt @db.Timestamp(6)
+
+  user                User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  settings            ProfileSetting?
+  social_links        SocialLink[]
+  experiences         Experience[]
+  education           Education[]
+  skills              Skill[]
+  hobbies             Hobby[]
+  interests           Interest[]
+  achievements        Achievement[]
+  certifications      Certification[]
+  projects            Project[]
+  artwork             Artwork[]
+  galleries           Gallery[]
+  publications        Publication[]
+  testimonials        Testimonial[]
+  timeline_events     TimelineEvent[]
+  custom_sections     CustomSection[]
+  profile_sections    ProfileSection[]
+  media               Media[]
+  contact_messages    ContactMessage[]
+  profile_views       ProfileView[]
+
+  @@index([username])
+  @@index([user_id])
+  @@index([profile_status])
+  @@index([profile_type])
+  @@map("profiles")
+}
+
+model ProfileSetting {
+  id                 String    @id @default(uuid()) @db.Uuid
+  profile_id         String    @unique @db.Uuid
+  show_email         Boolean   @default(false)
+  show_phone         Boolean   @default(false)
+  allow_contact      Boolean   @default(true)
+  allow_indexing     Boolean   @default(true)
+  show_social_links  Boolean   @default(true)
+  show_location      Boolean   @default(true)
+  show_age           Boolean   @default(false)
+  show_view_count    Boolean   @default(false)
+  enable_analytics   Boolean   @default(true)
+  maintenance_mode   Boolean   @default(false)
+  created_at         DateTime  @default(now()) @db.Timestamp(6)
+  updated_at         DateTime  @updatedAt @db.Timestamp(6)
+
+  profile            Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@map("profile_settings")
+}
+
+model SocialLink {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  platform      String    @db.VarChar(50)
+  label         String?   @db.VarChar(100)
+  username      String?   @db.VarChar(100)
+  url           String    @db.Text
+  icon          String?   @db.VarChar(50)
+  display_order Int       @default(0)
+  is_visible    Boolean   @default(true)
+  is_verified   Boolean   @default(false)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@index([platform])
+  @@index([display_order])
+  @@map("social_links")
+}
+
+model Experience {
+  id               String    @id @default(uuid()) @db.Uuid
+  profile_id       String    @db.Uuid
+  company_name     String    @db.VarChar(150)
+  position         String    @db.VarChar(150)
+  description      String?   @db.Text
+  location         String?   @db.VarChar(100)
+  start_date       DateTime? @db.Date
+  end_date         DateTime? @db.Date
+  is_current       Boolean   @default(false)
+  company_url      String?   @db.Text
+  company_logo_url String?   @db.Text
+  display_order    Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt @db.Timestamp(6)
+
+  profile          Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("experiences")
+}
+
+model Education {
+  id               String    @id @default(uuid()) @db.Uuid
+  profile_id       String    @db.Uuid
+  institution_name String    @db.VarChar(150)
+  degree           String?   @db.VarChar(100)
+  field_of_study   String?   @db.VarChar(150)
+  description      String?   @db.Text
+  location         String?   @db.VarChar(100)
+  start_date       DateTime? @db.Date
+  end_date         DateTime? @db.Date
+  grade            String?   @db.VarChar(50)
+  institution_url  String?   @db.Text
+  display_order    Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt @db.Timestamp(6)
+
+  profile          Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("education")
+}
+
+model Skill {
+  id               String    @id @default(uuid()) @db.Uuid
+  profile_id       String    @db.Uuid
+  name             String    @db.VarChar(100)
+  category         String?   @db.VarChar(100)
+  proficiency      Int?      @default(80)
+  years_experience Decimal?  @db.Decimal(4, 1)
+  icon             String?   @db.VarChar(50)
+  display_order    Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt @db.Timestamp(6)
+
+  profile          Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("skills")
+}
+
+model Hobby {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  name          String    @db.VarChar(100)
+  description   String?   @db.Text
+  icon          String?   @db.VarChar(50)
+  image_url     String?   @db.Text
+  display_order Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("hobbies")
+}
+
+model Interest {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  name          String    @db.VarChar(100)
+  category      String?   @db.VarChar(100)
+  description   String?   @db.Text
+  display_order Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("interests")
+}
+
+model Achievement {
+  id               String    @id @default(uuid()) @db.Uuid
+  profile_id       String    @db.Uuid
+  title            String    @db.VarChar(200)
+  description      String?   @db.Text
+  organization     String?   @db.VarChar(150)
+  achievement_date DateTime? @db.Date
+  credential_url   String?   @db.Text
+  image_url        String?   @db.Text
+  display_order    Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt @db.Timestamp(6)
+
+  profile          Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("achievements")
+}
+
+model Certification {
+  id              String    @id @default(uuid()) @db.Uuid
+  profile_id      String    @db.Uuid
+  name            String    @db.VarChar(200)
+  issuer          String?   @db.VarChar(150)
+  credential_id   String?   @db.VarChar(100)
+  issue_date      DateTime? @db.Date
+  expiry_date     DateTime? @db.Date
+  credential_url  String?   @db.Text
+  certificate_url String?   @db.Text
+  display_order   Int       @default(0)
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime  @updatedAt @db.Timestamp(6)
+
+  profile         Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("certifications")
+}
+
+model Project {
+  id              String    @id @default(uuid()) @db.Uuid
+  profile_id      String    @db.Uuid
+  name            String    @db.VarChar(200)
+  slug            String    @db.VarChar(200)
+  description     String?   @db.Text
+  role            String?   @db.VarChar(100)
+  technologies    Json?     @default("[]")
+  project_url     String?   @db.Text
+  github_url      String?   @db.Text
+  cover_image_url String?   @db.Text
+  start_date      DateTime? @db.Date
+  end_date        DateTime? @db.Date
+  display_order   Int       @default(0)
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime  @updatedAt @db.Timestamp(6)
+
+  profile         Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@unique([profile_id, slug])
+  @@index([profile_id])
+  @@map("projects")
+}
+
+model Artwork {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  title         String    @db.VarChar(200)
+  description   String?   @db.Text
+  category      String?   @db.VarChar(100)
+  image_url     String?   @db.Text
+  external_url  String?   @db.Text
+  creation_date DateTime? @db.Date
+  license       String?   @db.VarChar(100)
+  display_order Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("artwork")
+}
+
+model Gallery {
+  id              String        @id @default(uuid()) @db.Uuid
+  profile_id      String        @db.Uuid
+  title           String        @db.VarChar(200)
+  description     String?       @db.Text
+  cover_image_url String?       @db.Text
+  display_order   Int           @default(0)
+  is_visible      Boolean       @default(true)
+  created_at      DateTime      @default(now()) @db.Timestamp(6)
+  updated_at      DateTime      @updatedAt @db.Timestamp(6)
+
+  profile         Profile       @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  items           GalleryItem[]
+
+  @@index([profile_id])
+  @@map("galleries")
+}
+
+model GalleryItem {
+  id            String    @id @default(uuid()) @db.Uuid
+  gallery_id    String    @db.Uuid
+  media_url     String    @db.Text
+  media_type    String?   @default("image") @db.VarChar(50)
+  title         String?   @db.VarChar(200)
+  description   String?   @db.Text
+  display_order Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+
+  gallery       Gallery   @relation(fields: [gallery_id], references: [id], onDelete: Cascade)
+
+  @@index([gallery_id])
+  @@map("gallery_items")
+}
+
+model Publication {
+  id               String    @id @default(uuid()) @db.Uuid
+  profile_id       String    @db.Uuid
+  title            String    @db.VarChar(255)
+  description      String?   @db.Text
+  publisher        String?   @db.VarChar(150)
+  publication_date DateTime? @db.Date
+  url              String?   @db.Text
+  cover_image_url  String?   @db.Text
+  display_order    Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt @db.Timestamp(6)
+
+  profile          Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("publications")
+}
+
+model Testimonial {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  name          String    @db.VarChar(150)
+  role          String?   @db.VarChar(150)
+  company       String?   @db.VarChar(150)
+  message       String    @db.Text
+  photo_url     String?   @db.Text
+  website_url   String?   @db.Text
+  is_approved   Boolean   @default(true)
+  is_visible    Boolean   @default(true)
+  display_order Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("testimonials")
+}
+
+model TimelineEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  title         String    @db.VarChar(200)
+  description   String?   @db.Text
+  event_date    DateTime? @db.Date
+  event_type    String?   @db.VarChar(50)
+  image_url     String?   @db.Text
+  external_url  String?   @db.Text
+  display_order Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("timeline_events")
+}
+
+model CustomSection {
+  id            String    @id @default(uuid()) @db.Uuid
+  profile_id    String    @db.Uuid
+  title         String    @db.VarChar(150)
+  slug          String?   @db.VarChar(150)
+  content       String?   @db.Text
+  configuration Json?     @default("{}")
+  display_order Int       @default(0)
+  is_visible    Boolean   @default(true)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  profile       Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("custom_sections")
+}
+
+model ProfileSection {
+  id                   String    @id @default(uuid()) @db.Uuid
+  profile_id           String    @db.Uuid
+  section_type         String    @db.VarChar(50) // about, experience, education, skills, projects, artwork, gallery, social_links, contact, timeline, testimonials, achievements, publications, custom
+  section_reference_id String?   @db.Uuid
+  display_order        Int       @default(0)
+  is_visible           Boolean   @default(true)
+  configuration        Json?     @default("{}")
+  created_at           DateTime  @default(now()) @db.Timestamp(6)
+  updated_at           DateTime  @updatedAt @db.Timestamp(6)
+
+  profile              Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@index([section_type])
+  @@index([display_order])
+  @@map("profile_sections")
+}
+
+model Media {
+  id         String    @id @default(uuid()) @db.Uuid
+  profile_id String    @db.Uuid
+  file_name  String?   @db.VarChar(255)
+  file_url   String    @db.Text
+  file_type  String?   @db.VarChar(50)
+  mime_type  String?   @db.VarChar(100)
+  file_size  BigInt?
+  width      Int?
+  height     Int?
+  alt_text   String?   @db.Text
+  metadata   Json?     @default("{}")
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+
+  profile    Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@map("media")
+}
+
+model ContactMessage {
+  id           String        @id @default(uuid()) @db.Uuid
+  profile_id   String        @db.Uuid
+  sender_name  String?       @db.VarChar(150)
+  sender_email String?       @db.VarChar(255)
+  subject      String?       @db.VarChar(255)
+  message      String        @db.Text
+  status       MessageStatus @default(new)
+  ip_hash      String?       @db.VarChar(64)
+  created_at   DateTime      @default(now()) @db.Timestamp(6)
+
+  profile      Profile       @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@index([status])
+  @@map("contact_messages")
+}
+
+model ProfileView {
+  id               String    @id @default(uuid()) @db.Uuid
+  profile_id       String    @db.Uuid
+  viewed_at        DateTime  @default(now()) @db.Timestamp(6)
+  referrer         String?   @db.Text
+  country          String?   @db.VarChar(100)
+  device_type      String?   @db.VarChar(50)
+  browser          String?   @db.VarChar(50)
+  operating_system String?   @db.VarChar(50)
+
+  profile          Profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@index([viewed_at])
+  @@map("profile_views")
+}
+
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  user_id     String?   @db.Uuid
+  action      String    @db.VarChar(100)
+  entity_type String?   @db.VarChar(50)
+  entity_id   String?   @db.Uuid
+  metadata    Json?     @default("{}")
+  ip_hash     String?   @db.VarChar(64)
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+
+  user        User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([action])
+  @@index([created_at])
+  @@map("audit_logs")
+}
