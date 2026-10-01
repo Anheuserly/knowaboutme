@@ -67,17 +67,19 @@ export async function POST(req: Request) {
       [newProfile.id]
     );
 
-    // 7. Initialize default sections
-    const defaultSections = [
-      "about", "experience", "projects", "skills", "education", "social_links", "contact"
-    ];
-    for (let i = 0; i < defaultSections.length; i++) {
-      await query(
-        `INSERT INTO profile_sections (id, profile_id, section_type, display_order, is_visible, created_at, updated_at)
-         VALUES (gen_random_uuid(), $1, $2, $3, true, NOW(), NOW())`,
-        [newProfile.id, defaultSections[i], i + 1]
-      );
-    }
+    // 7. Initialize default sections in a single fast query
+    await query(
+      `INSERT INTO profile_sections (id, profile_id, section_type, display_order, is_visible, created_at, updated_at)
+       VALUES 
+         (gen_random_uuid(), $1, 'about', 1, true, NOW(), NOW()),
+         (gen_random_uuid(), $1, 'experience', 2, true, NOW(), NOW()),
+         (gen_random_uuid(), $1, 'projects', 3, true, NOW(), NOW()),
+         (gen_random_uuid(), $1, 'skills', 4, true, NOW(), NOW()),
+         (gen_random_uuid(), $1, 'education', 5, true, NOW(), NOW()),
+         (gen_random_uuid(), $1, 'social_links', 6, true, NOW(), NOW()),
+         (gen_random_uuid(), $1, 'contact', 7, true, NOW(), NOW())`,
+      [newProfile.id]
+    );
 
     // 8. Sign JWT and set cookie
     const token = signToken({

@@ -1,46 +1,29 @@
-import { Pool, QueryResult, QueryResultRow } from "pg";
-
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:AnheVps2022@vps.amcmep.in:5432/knowaboutme";
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __pgPool: Pool | undefined;
-}
-
-let pool: Pool;
-
-if (process.env.NODE_ENV === "production") {
-  pool = new Pool({
-    connectionString,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 8000,
-    ssl: false,
-  });
-} else {
-  if (!global.__pgPool) {
-    global.__pgPool = new Pool({
-      connectionString,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 8000,
-      ssl: false,
-    });
-  }
-  pool = global.__pgPool;
-}
-
-export { pool };
+import { Client, QueryResult, QueryResultRow } from "pg";
 
 export async function query<T extends QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> {
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:AnheVps2022@vps.amcmep.in:5432/knowaboutme";
+
+  const client = new Client({
+    connectionString,
+    connectionTimeoutMillis: 5000,
+    ssl: false,
+  });
+
+  client.on("error", (err) => {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[DB Client Notice]", err?.message || err);
+    }
+  });
+
+  await client.connect();
   const start = Date.now();
   try {
-    const res = await pool.query<T>(text, params);
+    const res = await client.query<T>(text, params);
     const duration = Date.now() - start;
     if (process.env.NODE_ENV === "development") {
       console.log("[DB QUERY]", { text: text.slice(0, 100), duration, rows: res.rowCount });
@@ -49,11 +32,27 @@ export async function query<T extends QueryResultRow = any>(
   } catch (error) {
     console.error("[DB ERROR]", { text: text.slice(0, 150), error });
     throw error;
+  } finally {
+    try {
+      await client.end();
+    } catch {
+      // Ignore disconnect errors
+    }
   }
 }
 
 export async function getClient() {
-  return await pool.connect();
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:AnheVps2022@vps.amcmep.in:5432/knowaboutme";
+
+  const client = new Client({
+    connectionString,
+    connectionTimeoutMillis: 5000,
+    ssl: false,
+  });
+  await client.connect();
+  return client;
 }
 
-export default pool;
+export default query;

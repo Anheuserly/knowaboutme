@@ -11,25 +11,34 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
-    const [usersRes, profilesRes, viewsRes, messagesRes, recentUsersRes] = await Promise.all([
-      query(`SELECT COUNT(*) as count FROM users`),
-      query(`SELECT COUNT(*) as count, COUNT(*) FILTER (WHERE is_verified = TRUE) as verified FROM profiles`),
-      query(`SELECT COUNT(*) as count FROM profile_views`),
-      query(`SELECT COUNT(*) as count FROM contact_messages`),
-      query(`SELECT u.email, u.created_at, p.username, p.display_name 
-             FROM users u LEFT JOIN profiles p ON u.id = p.user_id 
-             ORDER BY u.created_at DESC LIMIT 5`),
-    ]);
+    const statsRes = await query(
+      `SELECT 
+        (SELECT COUNT(*) FROM users) as total_users,
+        (SELECT COUNT(*) FROM profiles) as total_profiles,
+        (SELECT COUNT(*) FROM profiles WHERE is_verified = TRUE) as verified_profiles,
+        (SELECT COUNT(*) FROM profile_views) as total_views,
+        (SELECT COUNT(*) FROM contact_messages) as total_messages,
+        COALESCE((
+          SELECT json_agg(ru.*)
+          FROM (
+            SELECT u.email, u.created_at, p.username, p.display_name 
+            FROM users u LEFT JOIN profiles p ON u.id = p.user_id 
+            ORDER BY u.created_at DESC LIMIT 5
+          ) ru
+        ), '[]'::json) as recent_users`
+    );
+
+    const row = statsRes.rows[0];
 
     return NextResponse.json({
       success: true,
       stats: {
-        totalUsers: Number(usersRes.rows[0]?.count || 0),
-        totalProfiles: Number(profilesRes.rows[0]?.count || 0),
-        verifiedProfiles: Number(profilesRes.rows[0]?.verified || 0),
-        totalViews: Number(viewsRes.rows[0]?.count || 0),
-        totalMessages: Number(messagesRes.rows[0]?.count || 0),
-        recentUsers: recentUsersRes.rows,
+        totalUsers: Number(row?.total_users || 0),
+        totalProfiles: Number(row?.total_profiles || 0),
+        verifiedProfiles: Number(row?.verified_profiles || 0),
+        totalViews: Number(row?.total_views || 0),
+        totalMessages: Number(row?.total_messages || 0),
+        recentUsers: row?.recent_users || [],
       },
     });
   } catch (error: any) {

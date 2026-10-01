@@ -20,35 +20,23 @@ export default async function DashboardOverviewPage() {
   const session = await getSession();
   if (!session) return null;
 
-  // Fetch profile and stats
-  const [profileRes, viewsRes, messagesRes, sectionsRes] = await Promise.all([
-    query(
-      `SELECT id, username, display_name, headline, short_bio, profile_photo_url, cover_image_url, theme_id
-       FROM profiles WHERE user_id = $1 LIMIT 1`,
-      [session.id]
-    ),
-    query(
-      `SELECT COUNT(*) as total_views FROM profile_views 
-       WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = $1)`,
-      [session.id]
-    ),
-    query(
-      `SELECT * FROM contact_messages 
-       WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = $1)
-       ORDER BY created_at DESC LIMIT 5`,
-      [session.id]
-    ),
-    query(
-      `SELECT COUNT(*) as active_sections FROM profile_sections 
-       WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = $1) AND is_visible = TRUE`,
-      [session.id]
-    ),
-  ]);
+  // Fetch profile, views, recent messages, and sections in a single performant query
+  const res = await query(
+    `SELECT 
+      p.id, p.username, p.display_name, p.headline, p.short_bio, p.profile_photo_url, p.cover_image_url, p.theme_id,
+      (SELECT COUNT(*) FROM profile_views pv WHERE pv.profile_id = p.id) as total_views,
+      (SELECT COUNT(*) FROM profile_sections ps WHERE ps.profile_id = p.id AND ps.is_visible = TRUE) as active_sections,
+      COALESCE((SELECT json_agg(cm.* ORDER BY cm.created_at DESC) FROM (SELECT * FROM contact_messages WHERE profile_id = p.id ORDER BY created_at DESC LIMIT 5) cm), '[]'::json) as recent_messages
+     FROM profiles p
+     WHERE p.user_id = $1
+     LIMIT 1`,
+    [session.id]
+  );
 
-  const profile = profileRes.rows[0];
-  const totalViews = Number(viewsRes.rows[0]?.total_views || 0);
-  const recentMessages = messagesRes.rows;
-  const activeSectionsCount = Number(sectionsRes.rows[0]?.active_sections || 0);
+  const profile = res.rows[0];
+  const totalViews = Number(profile?.total_views || 0);
+  const recentMessages = profile?.recent_messages || [];
+  const activeSectionsCount = Number(profile?.active_sections || 0);
 
   // Calculate completeness score
   let score = 20; // base for registration

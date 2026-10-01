@@ -57,12 +57,12 @@ export function ProfileHeader({
                 {profile.profile_photo_url ? (
                   <img
                     src={profile.profile_photo_url}
-                    alt={profile.display_name}
+                    alt={profile.display_name || profile.username || "Profile"}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-neutral-500 uppercase bg-neutral-100 dark:bg-neutral-800">
-                    {profile.display_name.charAt(0)}
+                    {(profile.display_name || profile.username || "U").charAt(0)}
                   </div>
                 )}
               </div>
@@ -70,7 +70,7 @@ export function ProfileHeader({
               <div className="space-y-1">
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 dark:text-neutral-50">
-                    {profile.display_name}
+                    {profile.display_name || profile.username}
                   </h1>
                   {profile.is_verified && (
                     <span title="Verified Identity" className="text-indigo-600 dark:text-indigo-400">

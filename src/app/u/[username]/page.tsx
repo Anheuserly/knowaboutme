@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { query } from "@/lib/db";
@@ -11,19 +12,32 @@ interface ProfilePageProps {
   params: Promise<{ username: string }>;
 }
 
-async function getProfileData(username: string): Promise<PublicProfile | null> {
+const getProfileData = cache(async (username: string): Promise<PublicProfile | null> => {
   const cleanUsername = decodeURIComponent(username).replace(/^@/, "").toLowerCase().trim();
 
   try {
     const session = await getSession();
 
-    // 1. Fetch Profile and User Settings
+    // 1. Fetch Profile, Settings, and All Related Sections in a single performant SQL query
     const profileRes = await query(
-      `SELECT p.*, s.show_email, s.show_phone, s.allow_contact, s.show_social_links, s.show_location, s.show_view_count
-       FROM profiles p
-       LEFT JOIN profile_settings s ON p.id = s.profile_id
-       WHERE LOWER(p.username) = LOWER($1)
-       LIMIT 1`,
+      `SELECT 
+        p.*,
+        s.show_email, s.show_phone, s.allow_contact, s.show_social_links, s.show_location, s.show_view_count,
+        COALESCE((SELECT json_agg(sl.* ORDER BY sl.display_order ASC) FROM social_links sl WHERE sl.profile_id = p.id AND sl.is_visible = TRUE), '[]'::json) AS social_links,
+        COALESCE((SELECT json_agg(e.* ORDER BY e.display_order ASC, e.start_date DESC) FROM experiences e WHERE e.profile_id = p.id), '[]'::json) AS experiences,
+        COALESCE((SELECT json_agg(ed.* ORDER BY ed.display_order ASC, ed.start_date DESC) FROM education ed WHERE ed.profile_id = p.id), '[]'::json) AS education,
+        COALESCE((SELECT json_agg(sk.* ORDER BY sk.display_order ASC) FROM skills sk WHERE sk.profile_id = p.id), '[]'::json) AS skills,
+        COALESCE((SELECT json_agg(pr.* ORDER BY pr.display_order ASC) FROM projects pr WHERE pr.profile_id = p.id), '[]'::json) AS projects,
+        COALESCE((SELECT json_agg(ar.* ORDER BY ar.display_order ASC) FROM artwork ar WHERE ar.profile_id = p.id), '[]'::json) AS artwork,
+        COALESCE((SELECT json_agg(h.* ORDER BY h.display_order ASC) FROM hobbies h WHERE h.profile_id = p.id), '[]'::json) AS hobbies,
+        COALESCE((SELECT json_agg(i.* ORDER BY i.display_order ASC) FROM interests i WHERE i.profile_id = p.id), '[]'::json) AS interests,
+        COALESCE((SELECT json_agg(a.* ORDER BY a.display_order ASC) FROM achievements a WHERE a.profile_id = p.id), '[]'::json) AS achievements,
+        COALESCE((SELECT json_agg(t.* ORDER BY t.display_order ASC) FROM testimonials t WHERE t.profile_id = p.id AND t.is_visible = TRUE AND t.is_approved = TRUE), '[]'::json) AS testimonials,
+        COALESCE((SELECT json_agg(tl.* ORDER BY tl.display_order ASC, tl.event_date DESC) FROM timeline_events tl WHERE tl.profile_id = p.id), '[]'::json) AS timeline_events
+      FROM profiles p
+      LEFT JOIN profile_settings s ON p.id = s.profile_id
+      WHERE LOWER(p.username) = LOWER($1)
+      LIMIT 1`,
       [cleanUsername]
     );
 
@@ -41,39 +55,16 @@ async function getProfileData(username: string): Promise<PublicProfile | null> {
 
     const profileId = row.id;
 
-    // 2. Concurrently fetch all sections
-    const [
-      socialsRes,
-      expRes,
-      eduRes,
-      skillsRes,
-      projRes,
-      artRes,
-      hobbiesRes,
-      interestsRes,
-      achRes,
-      testRes,
-      timelineRes,
-    ] = await Promise.all([
-      query(`SELECT * FROM social_links WHERE profile_id = $1 AND is_visible = TRUE ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM experiences WHERE profile_id = $1 ORDER BY display_order ASC, start_date DESC`, [profileId]),
-      query(`SELECT * FROM education WHERE profile_id = $1 ORDER BY display_order ASC, start_date DESC`, [profileId]),
-      query(`SELECT * FROM skills WHERE profile_id = $1 ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM projects WHERE profile_id = $1 ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM artwork WHERE profile_id = $1 ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM hobbies WHERE profile_id = $1 ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM interests WHERE profile_id = $1 ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM achievements WHERE profile_id = $1 ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM testimonials WHERE profile_id = $1 AND is_visible = TRUE AND is_approved = TRUE ORDER BY display_order ASC`, [profileId]),
-      query(`SELECT * FROM timeline_events WHERE profile_id = $1 ORDER BY display_order ASC, event_date DESC`, [profileId]),
-    ]);
-
-    // 3. Record Profile View asynchronously (non-blocking, don't count owner)
+    // 2. Record Profile View safely in non-blocking manner (don't track owner views)
     if (!isOwner) {
-      query(
-        `INSERT INTO profile_views (id, profile_id, viewed_at) VALUES (gen_random_uuid(), $1, NOW())`,
-        [profileId]
-      ).catch(() => {});
+      try {
+        await query(
+          `INSERT INTO profile_views (id, profile_id, viewed_at) VALUES (gen_random_uuid(), $1, NOW())`,
+          [profileId]
+        );
+      } catch {
+        // Non-critical, ignore if tracking fails
+      }
     }
 
     return {
@@ -105,23 +96,23 @@ async function getProfileData(username: string): Promise<PublicProfile | null> {
         show_location: Boolean(row.show_location ?? true),
         show_view_count: Boolean(row.show_view_count),
       },
-      social_links: socialsRes.rows || [],
-      experiences: expRes.rows || [],
-      education: eduRes.rows || [],
-      skills: skillsRes.rows || [],
-      projects: projRes.rows || [],
-      artwork: artRes.rows || [],
-      hobbies: hobbiesRes.rows || [],
-      interests: interestsRes.rows || [],
-      achievements: achRes.rows || [],
-      testimonials: testRes.rows || [],
-      timeline_events: timelineRes.rows || [],
+      social_links: row.social_links || [],
+      experiences: row.experiences || [],
+      education: row.education || [],
+      skills: row.skills || [],
+      projects: row.projects || [],
+      artwork: row.artwork || [],
+      hobbies: row.hobbies || [],
+      interests: row.interests || [],
+      achievements: row.achievements || [],
+      testimonials: row.testimonials || [],
+      timeline_events: row.timeline_events || [],
     };
   } catch (error) {
     console.error("Error fetching profile:", error);
     return null;
   }
-}
+});
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { username } = await params;
