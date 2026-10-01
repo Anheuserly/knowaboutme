@@ -10,6 +10,30 @@ interface SafeImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>,
   fallbackType?: "avatar" | "cover" | "artwork" | "project" | "generic";
   initials?: string;
   containerClassName?: string;
+  priority?: boolean;
+}
+
+function shouldProxyImmediately(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const lower = url.toLowerCase();
+  // Domains that block hotlinking, lack CORS headers, or require server-side fetch
+  return (
+    lower.includes("ftcdn.net") ||
+    lower.includes("discordapp.net") ||
+    lower.includes("discordapp.com") ||
+    lower.includes("pinimg.com") ||
+    lower.includes("media.licdn.com") ||
+    lower.includes("pbs.twimg.com") ||
+    lower.includes("staticflickr.com")
+  );
+}
+
+function resolveInitialSrc(src?: string | null): string | null {
+  if (!src) return null;
+  if (shouldProxyImmediately(src)) {
+    return `/api/image-proxy?url=${encodeURIComponent(src)}`;
+  }
+  return src;
 }
 
 export function SafeImage({
@@ -20,30 +44,32 @@ export function SafeImage({
   fallbackType = "generic",
   initials = "U",
   containerClassName = "",
+  priority = false,
   ...props
 }: SafeImageProps) {
-  const [currentSrc, setCurrentSrc] = useState<string | null>(src || null);
-  const [hasAttemptedProxy, setHasAttemptedProxy] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState<string | null>(resolveInitialSrc(src));
+  const [hasAttemptedProxy, setHasAttemptedProxy] = useState(shouldProxyImmediately(src));
   const [hasFailedCompletely, setHasFailedCompletely] = useState(!src);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setCurrentSrc(src || null);
-    setHasAttemptedProxy(false);
+    const resolved = resolveInitialSrc(src);
+    setCurrentSrc(resolved);
+    setHasAttemptedProxy(shouldProxyImmediately(src));
     setHasFailedCompletely(!src);
     setIsLoaded(false);
   }, [src]);
 
   const handleError = () => {
-    // If we haven't tried the internal image proxy yet and it's a remote http URL, try proxying it
+    // If we haven't tried the internal image proxy yet and it's a remote URL, try proxying it
     if (
       !hasAttemptedProxy &&
-      currentSrc &&
-      currentSrc.startsWith("http") &&
-      !currentSrc.startsWith("/api/image-proxy")
+      src &&
+      src.startsWith("http") &&
+      !currentSrc?.startsWith("/api/image-proxy")
     ) {
       setHasAttemptedProxy(true);
-      setCurrentSrc(`/api/image-proxy?url=${encodeURIComponent(currentSrc)}`);
+      setCurrentSrc(`/api/image-proxy?url=${encodeURIComponent(src)}`);
       return;
     }
 
@@ -115,12 +141,12 @@ export function SafeImage({
       src={currentSrc}
       alt={alt}
       referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
       onError={handleError}
       onLoad={() => setIsLoaded(true)}
       className={`${className} transition-opacity duration-300 ${
-        isLoaded ? "opacity-100" : "opacity-80"
+        isLoaded ? "opacity-100" : "opacity-90"
       }`}
       {...props}
     />

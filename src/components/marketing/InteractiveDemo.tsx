@@ -13,6 +13,7 @@ import {
   Eye,
 } from "lucide-react";
 import { THEMES } from "@/lib/themes";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export function InteractiveDemo() {
   const [activeThemeKey, setActiveThemeKey] = useState<string>("creative");
@@ -80,11 +81,15 @@ export function InteractiveDemo() {
           >
             {/* Mock Profile Hero */}
             <div className="flex items-center gap-4">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
-                alt="Alex Morgan"
-                className="w-16 h-16 rounded-full object-cover ring-2 ring-indigo-500 shadow-md"
-              />
+              <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 ring-2 ring-indigo-500 shadow-md">
+                <SafeImage
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
+                  alt="Alex Morgan"
+                  fallbackType="avatar"
+                  initials="AM"
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-lg font-bold">Alex Morgan</h3>
@@ -158,16 +163,18 @@ export function InteractiveDemo() {
               {activeTab === "artwork" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="aspect-video rounded-xl overflow-hidden bg-neutral-800">
-                    <img
+                    <SafeImage
                       src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80"
                       alt="Art 1"
+                      fallbackType="artwork"
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="aspect-video rounded-xl overflow-hidden bg-neutral-800">
-                    <img
+                    <SafeImage
                       src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=500&q=80"
                       alt="Art 2"
+                      fallbackType="artwork"
                       className="w-full h-full object-cover"
                     />
                   </div>

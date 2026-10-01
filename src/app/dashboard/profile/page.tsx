@@ -196,13 +196,28 @@ export default function EditProfilePage() {
                   name="profile_photo_url"
                   value={formData.profile_photo_url}
                   onChange={handleChange}
-                  placeholder="https://example.com/avatar.jpg"
+                  placeholder="https://images.unsplash.com/..."
                   className="flex-1 px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1.5">
-                Square image recommended (at least 400x400px).
-              </p>
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider mr-1">Presets:</span>
+                {[
+                  { label: "Creator", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" },
+                  { label: "Dev", url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80" },
+                  { label: "Studio", url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80" },
+                  { label: "Minimal", url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80" },
+                ].map((p, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, profile_photo_url: p.url }))}
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-neutral-600 dark:text-neutral-300 hover:text-indigo-600 transition-colors"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -233,9 +248,24 @@ export default function EditProfilePage() {
                   className="flex-1 px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1.5">
-                Wide landscape image recommended (at least 1500x500px).
-              </p>
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider mr-1">Presets:</span>
+                {[
+                  { label: "Cosmic", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=80" },
+                  { label: "Obsidian", url: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1800&q=80" },
+                  { label: "Tech Work", url: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1800&q=80" },
+                  { label: "Neon", url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1800&q=80" },
+                ].map((p, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, cover_image_url: p.url }))}
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-neutral-600 dark:text-neutral-300 hover:text-indigo-600 transition-colors"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

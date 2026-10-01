@@ -70,6 +70,7 @@ END:VCARD`;
             src={profile.cover_image_url}
             alt={`${profile.display_name} cover`}
             fallbackType="cover"
+            priority={true}
             className="w-full h-full object-cover"
           />
           {/* Subtle gradient vignette overlay */}
@@ -88,6 +89,7 @@ END:VCARD`;
                   alt={profile.display_name || profile.username || "Profile"}
                   fallbackType="avatar"
                   initials={initials}
+                  priority={true}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div
