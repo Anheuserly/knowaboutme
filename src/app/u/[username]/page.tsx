@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { query } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 import type { PublicProfile } from "@/types/profile";
 import { ProfileThemeWrapper } from "@/components/profile/ProfileThemeWrapper";
 
@@ -14,12 +15,14 @@ async function getProfileData(username: string): Promise<PublicProfile | null> {
   const cleanUsername = decodeURIComponent(username).replace(/^@/, "").toLowerCase().trim();
 
   try {
-    // 1. Fetch Profile and User
+    const session = await getSession();
+
+    // 1. Fetch Profile and User Settings
     const profileRes = await query(
       `SELECT p.*, s.show_email, s.show_phone, s.allow_contact, s.show_social_links, s.show_location, s.show_view_count
        FROM profiles p
        LEFT JOIN profile_settings s ON p.id = s.profile_id
-       WHERE LOWER(p.username) = LOWER($1) AND p.profile_status = 'published'
+       WHERE LOWER(p.username) = LOWER($1)
        LIMIT 1`,
       [cleanUsername]
     );
@@ -29,6 +32,13 @@ async function getProfileData(username: string): Promise<PublicProfile | null> {
     }
 
     const row = profileRes.rows[0];
+
+    // If profile is not published, only the owner can view it
+    const isOwner = session && session.username?.toLowerCase() === cleanUsername;
+    if (row.profile_status !== "published" && !isOwner) {
+      return null;
+    }
+
     const profileId = row.id;
 
     // 2. Concurrently fetch all sections
@@ -58,11 +68,13 @@ async function getProfileData(username: string): Promise<PublicProfile | null> {
       query(`SELECT * FROM timeline_events WHERE profile_id = $1 ORDER BY display_order ASC, event_date DESC`, [profileId]),
     ]);
 
-    // 3. Record Profile View asynchronously (non-blocking)
-    query(
-      `INSERT INTO profile_views (id, profile_id, viewed_at) VALUES (gen_random_uuid(), $1, NOW())`,
-      [profileId]
-    ).catch(() => {});
+    // 3. Record Profile View asynchronously (non-blocking, don't count owner)
+    if (!isOwner) {
+      query(
+        `INSERT INTO profile_views (id, profile_id, viewed_at) VALUES (gen_random_uuid(), $1, NOW())`,
+        [profileId]
+      ).catch(() => {});
+    }
 
     return {
       id: row.id,
@@ -93,17 +105,17 @@ async function getProfileData(username: string): Promise<PublicProfile | null> {
         show_location: Boolean(row.show_location ?? true),
         show_view_count: Boolean(row.show_view_count),
       },
-      social_links: socialsRes.rows,
-      experiences: expRes.rows,
-      education: eduRes.rows,
-      skills: skillsRes.rows,
-      projects: projRes.rows,
-      artwork: artRes.rows,
-      hobbies: hobbiesRes.rows,
-      interests: interestsRes.rows,
-      achievements: achRes.rows,
-      testimonials: testRes.rows,
-      timeline_events: timelineRes.rows,
+      social_links: socialsRes.rows || [],
+      experiences: expRes.rows || [],
+      education: eduRes.rows || [],
+      skills: skillsRes.rows || [],
+      projects: projRes.rows || [],
+      artwork: artRes.rows || [],
+      hobbies: hobbiesRes.rows || [],
+      interests: interestsRes.rows || [],
+      achievements: achRes.rows || [],
+      testimonials: testRes.rows || [],
+      timeline_events: timelineRes.rows || [],
     };
   } catch (error) {
     console.error("Error fetching profile:", error);
@@ -129,7 +141,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     profile.short_bio ||
     `Official personal identity and biographical portfolio of ${profile.display_name}.`;
 
-  const canonicalUrl = `https://knowaboutme.com/@${profile.username}`;
+  const canonicalUrl = `https://knowaboutme.amcmep.in/@${profile.username}`;
   const ogImages = profile.profile_photo_url ? [{ url: profile.profile_photo_url }] : [];
 
   return {
@@ -171,8 +183,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     alternateName: profile.username,
     description: profile.headline || profile.short_bio,
     image: profile.profile_photo_url,
-    url: `https://knowaboutme.com/@${profile.username}`,
-    sameAs: profile.social_links.map((s) => s.url),
+    url: `https://knowaboutme.amcmep.in/@${profile.username}`,
+    sameAs: profile.social_links?.map((s) => s.url) || [],
     jobTitle: profile.headline,
   };
 

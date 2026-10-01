@@ -164,9 +164,18 @@ export function ProfileSections({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {profile.projects.map((proj) => {
-              const techList = Array.isArray(proj.technologies)
-                ? proj.technologies
-                : [];
+              let techList: string[] = [];
+              if (Array.isArray(proj.technologies)) {
+                techList = proj.technologies;
+              } else if (typeof proj.technologies === "string") {
+                try {
+                  const parsed = JSON.parse(proj.technologies);
+                  if (Array.isArray(parsed)) techList = parsed;
+                  else techList = proj.technologies.split(",").map((s: string) => s.trim()).filter(Boolean);
+                } catch {
+                  techList = proj.technologies.split(",").map((s: string) => s.trim()).filter(Boolean);
+                }
+              }
 
               return (
                 <div

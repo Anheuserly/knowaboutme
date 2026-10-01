@@ -2,14 +2,21 @@
 
 > **"Your story. Your world. Your identity."**
 
-KnowAboutMe is a modern, high-performance personal identity platform built with Next.js 15 (App Router), React 19, Tailwind CSS, Prisma ORM, and PostgreSQL. It allows anyone to create a customizable, beautifully styled public identity page containing their biography, professional career, education, skills, projects, artwork, hobbies, achievements, testimonials, and milestones — shareable via a single URL at `knowaboutme.com/@username`.
+KnowAboutMe is a modern, high-performance personal identity platform built with Next.js 15 (App Router), React 19, Tailwind CSS, Prisma ORM, and PostgreSQL. It allows anyone to create a customizable, beautifully styled public identity page containing their biography, professional career, education, skills, projects, artwork, hobbies, achievements, testimonials, and milestones — shareable via a single URL at `https://knowaboutme.amcmep.in/@username`.
+
+📚 **Comprehensive Documentation Available in [`/docs`](./docs/README.md)**:
+- [Deployment Guide (Cloudflare Workers & Wrangler)](./docs/deployment.md)
+- [System Architecture](./docs/architecture.md)
+- [Database Schema & Models](./docs/database.md)
+- [API Reference](./docs/api.md)
+- [Features & User Guide](./docs/features.md)
 
 ---
 
 ## 🌟 Key Features
 
 ### 1. Unified Digital Identity
-- **One person, one identity, one profile**: Accessible at either `knowaboutme.com/@username` or `/u/username`.
+- **One person, one identity, one profile**: Accessible at either `https://knowaboutme.amcmep.in/@username` or `/u/username`.
 - **9 Curated Themes**:
   - *Minimal* — Ultra-clean whitespace & high-contrast typography
   - *Professional* — Slate & corporate executive presence

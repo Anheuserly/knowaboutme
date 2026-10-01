@@ -1,38 +1,59 @@
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
+import { Pool, QueryResult, QueryResultRow } from "pg";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-  pool: Pool | undefined;
-};
+const connectionString =
+  process.env.DATABASE_URL ||
+  "postgresql://postgres:AnheVps2022@vps.amcmep.in:5432/knowaboutme";
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
-  });
+declare global {
+  // eslint-disable-next-line no-var
+  var __pgPool: Pool | undefined;
+}
 
-export const pool =
-  globalForPrisma.pool ??
-  new Pool({
-    connectionString:
-      process.env.DATABASE_URL ||
-      "postgresql://postgres:AnheVps2022@vps.amcmep.in:5432/knowaboutme",
-    max: 15,
+let pool: Pool;
+
+if (process.env.NODE_ENV === "production") {
+  pool = new Pool({
+    connectionString,
+    max: 10,
     idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 8000,
+    ssl: false,
   });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-  globalForPrisma.pool = pool;
-}
-
-export async function query(text: string, params?: any[]) {
-  const start = Date.now();
-  const res = await pool.query(text, params);
-  const duration = Date.now() - start;
-  if (process.env.NODE_ENV === "development" && duration > 200) {
-    console.warn("⚠️ Slow query took", duration, "ms:", text.slice(0, 80));
+} else {
+  if (!global.__pgPool) {
+    global.__pgPool = new Pool({
+      connectionString,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 8000,
+      ssl: false,
+    });
   }
-  return res;
+  pool = global.__pgPool;
 }
+
+export { pool };
+
+export async function query<T extends QueryResultRow = any>(
+  text: string,
+  params?: any[]
+): Promise<QueryResult<T>> {
+  const start = Date.now();
+  try {
+    const res = await pool.query<T>(text, params);
+    const duration = Date.now() - start;
+    if (process.env.NODE_ENV === "development") {
+      console.log("[DB QUERY]", { text: text.slice(0, 100), duration, rows: res.rowCount });
+    }
+    return res;
+  } catch (error) {
+    console.error("[DB ERROR]", { text: text.slice(0, 150), error });
+    throw error;
+  }
+}
+
+export async function getClient() {
+  return await pool.connect();
+}
+
+export default pool;
