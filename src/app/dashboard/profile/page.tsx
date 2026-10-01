@@ -17,6 +17,7 @@ import {
   Layers,
   FileText,
 } from "lucide-react";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -177,11 +178,14 @@ export default function EditProfilePage() {
               </label>
               <div className="flex items-center gap-3">
                 {formData.profile_photo_url ? (
-                  <img
-                    src={formData.profile_photo_url}
-                    alt="Preview"
-                    className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
-                  />
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 shrink-0">
+                    <SafeImage
+                      src={formData.profile_photo_url}
+                      alt="Preview"
+                      fallbackType="avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
                     <User size={20} />
@@ -207,11 +211,14 @@ export default function EditProfilePage() {
               </label>
               <div className="flex items-center gap-3">
                 {formData.cover_image_url ? (
-                  <img
-                    src={formData.cover_image_url}
-                    alt="Cover Preview"
-                    className="w-16 h-10 rounded-lg object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
-                  />
+                  <div className="w-16 h-10 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 shrink-0">
+                    <SafeImage
+                      src={formData.cover_image_url}
+                      alt="Cover Preview"
+                      fallbackType="cover"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-16 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
                     <ImageIcon size={18} />
