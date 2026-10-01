@@ -5,6 +5,7 @@ import type { PublicProfile } from "@/types/profile";
 import { getTheme } from "@/lib/themes";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileSections } from "./ProfileSections";
+import { LogoIcon } from "@/components/ui/LogoIcon";
 
 interface ProfileThemeWrapperProps {
   profile: PublicProfile;
@@ -31,13 +32,11 @@ export function ProfileThemeWrapper({ profile }: ProfileThemeWrapperProps) {
       <header className="max-w-4xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between text-xs text-neutral-400">
         <a
           href="/"
-          className="inline-flex items-center gap-1.5 font-bold tracking-tight hover:text-indigo-500 transition-colors"
+          className="inline-flex items-center gap-2 font-bold tracking-tight hover:text-indigo-500 transition-colors group"
         >
-          <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center font-black text-[10px]">
-            K
-          </span>
-          <span className="text-neutral-900 dark:text-neutral-100 font-semibold">
-            KnowAboutMe
+          <LogoIcon size="xs" />
+          <span className="text-neutral-900 dark:text-neutral-100 font-bold text-xs">
+            KnowAbout<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500">Me</span>
           </span>
         </a>
 

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { LogoIcon } from "@/components/ui/LogoIcon";
 
 interface FooterProps {
   user?: {
@@ -29,11 +30,9 @@ export function Footer({ user }: FooterProps) {
     <footer className="border-t border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50 dark:bg-neutral-950 py-12 transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-            K
-          </div>
-          <span className="text-sm font-bold text-neutral-900 dark:text-neutral-50">
-            KnowAboutMe
+          <LogoIcon size="xs" />
+          <span className="text-sm font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50">
+            KnowAbout<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500">Me</span>
           </span>
           <span className="text-xs text-neutral-400 ml-2">
             &copy; {new Date().getFullYear()} KnowAboutMe Platform &bull; One person. One identity.

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, ExternalLink, Menu, X, Sparkles } from "lucide-react";
+import { LogoIcon } from "@/components/ui/LogoIcon";
 
 interface DashboardNavProps {
   user: any;
@@ -21,13 +22,16 @@ export function DashboardNav({ user }: DashboardNavProps) {
   return (
     <header className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-200 dark:border-neutral-800 h-16 flex items-center justify-between px-4 sm:px-6">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
-            K
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <LogoIcon size="sm" />
+          <div className="flex items-center gap-2">
+            <span className="text-base font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50 hidden sm:inline-block">
+              KnowAbout<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500">Me</span>
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+              Studio
+            </span>
           </div>
-          <span className="text-base font-bold text-neutral-900 dark:text-neutral-50 hidden sm:inline-block">
-            KnowAboutMe Studio
-          </span>
         </Link>
       </div>
 

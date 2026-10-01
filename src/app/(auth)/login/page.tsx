@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, Lock, Mail, AlertTriangle, RefreshCw } from "lucide-react";
+import { LogoIcon } from "@/components/ui/LogoIcon";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,10 +49,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-8 shadow-xl space-y-6">
         {/* Brand */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-base shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
-              K
-            </div>
+          <Link href="/" className="inline-flex items-center justify-center group mb-1">
+            <LogoIcon size="md" />
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
             Welcome back

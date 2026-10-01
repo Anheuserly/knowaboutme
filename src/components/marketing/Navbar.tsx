@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, UserCheck, LogOut, ExternalLink } from "lucide-react";
 import { SafeImage } from "@/components/ui/SafeImage";
+import { BrandLogo } from "@/components/ui/LogoIcon";
 
 interface NavbarProps {
   initialUser?: any;
@@ -31,18 +32,8 @@ export function Navbar({ initialUser }: NavbarProps) {
     <nav className="fixed top-0 inset-x-0 z-40 bg-white/85 dark:bg-neutral-950/85 backdrop-blur-xl border-b border-neutral-200/80 dark:border-neutral-800/80 transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
-            K
-          </div>
-          <div>
-            <span className="text-base font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50">
-              KnowAboutMe
-            </span>
-            <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
-              Identity Platform
-            </span>
-          </div>
+        <Link href="/">
+          <BrandLogo size="sm" />
         </Link>
 
         {/* Links & CTA */}

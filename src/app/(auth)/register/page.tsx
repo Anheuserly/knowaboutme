@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Lock, Mail, User, AtSign, AlertTriangle, RefreshCw } from "lucide-react";
+import { BrandLogo } from "@/components/ui/LogoIcon";
 
 function RegisterForm() {
   const router = useRouter();
@@ -57,13 +58,8 @@ function RegisterForm() {
   return (
     <div className="w-full max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-8 shadow-xl space-y-6">
       <div className="text-center space-y-2">
-        <Link href="/" className="inline-flex items-center gap-2 font-black text-xl tracking-tight">
-          <span className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-600/30">
-            K
-          </span>
-          <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            KnowAboutMe
-          </span>
+        <Link href="/" className="inline-flex items-center justify-center mb-1">
+          <BrandLogo size="md" showBadge={false} />
         </Link>
         <h1 className="text-xl font-bold tracking-tight">Claim Your Identity</h1>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
